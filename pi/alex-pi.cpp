@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <termios.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <unistd.h>
@@ -11,8 +12,30 @@
 #define PORT_NAME			"/dev/ttyACM0"
 #define BAUD_RATE			B9600
 
+static char prevch = '0'; 		// to prevent flooding of commands
+bool manual = true;
 int exitFlag=0;
 sem_t _xmitSema;
+
+char autotrans() { // non blocking keyboard input, removes the need for pressing enter
+    char buf = 0;
+    struct termios old = {0};
+    if (tcgetattr(0, &old) < 0)
+        perror("tcsetattr()");
+    old.c_lflag &= ~ICANON;
+    old.c_lflag &= ~ECHO;
+    old.c_cc[VMIN] = 1;
+    old.c_cc[VTIME] = 0;
+    if (tcsetattr(0, TCSANOW, &old) < 0)
+        perror("tcsetattr ICANON");
+    if (read(0, &buf, 1) < 0)
+        perror("read()");
+    old.c_lflag |= ICANON;
+    old.c_lflag |= ECHO;
+    if (tcsetattr(0, TCSADRAIN, &old) < 0)
+        perror("tcsetattr ~ICANON");
+    return (buf);
+}
 
 void handleError(TResult error)
 {
@@ -166,9 +189,22 @@ void flushInput()
 
 void getParams(TPacket *commandPacket)
 {
-	printf("Enter distance/angle in cm/degrees (e.g. 50) and power in %% (e.g. 75) separated by space.\n");
-	printf("E.g. 50 75 means go at 50 cm at 75%% power for forward/backward, or 50 degrees left or right turn at 75%%  power\n");
+	if (manual){
+		printf("Enter distance/angle in cm/degrees (e.g. 50) and power in %% (e.g. 75) separated by space.\n");
+		printf("E.g. 50 75 means go at 50 cm at 75%% power for forward/backward, or 50 degrees left or right turn at 75%%  power\n");
+	}
+	else{
+		printf("Enter straightline speed for fwd n reverse THEN, enter traverse speed\n");
+	}
 	scanf("%d %d", &commandPacket->params[0], &commandPacket->params[1]);
+	printf("sent %d %d\n", commandPacket->params[0], commandPacket->params[1]);
+	flushInput();
+}
+
+void getservoparams(TPacket *commandPacket)
+{
+	printf("RAW angle for servo in degrees 0 - 180 \n");
+	scanf("%d", &commandPacket->params[0]);
 	flushInput();
 }
 
@@ -180,36 +216,43 @@ void sendCommand(char command)
 
 	switch(command)
 	{
-		case 'f':
-		case 'F':
-			getParams(&commandPacket);
+		case 'w':
+		case 'W':
+			if (manual){
+				getParams(&commandPacket);
+			}
 			commandPacket.command = COMMAND_FORWARD;
-			sendPacket(&commandPacket);
-			break;
-
-		case 'b':
-		case 'B':
-			getParams(&commandPacket);
-			commandPacket.command = COMMAND_REVERSE;
-			sendPacket(&commandPacket);
-			break;
-
-		case 'l':
-		case 'L':
-			getParams(&commandPacket);
-			commandPacket.command = COMMAND_TURN_LEFT;
-			sendPacket(&commandPacket);
-			break;
-
-		case 'r':
-		case 'R':
-			getParams(&commandPacket);
-			commandPacket.command = COMMAND_TURN_RIGHT;
 			sendPacket(&commandPacket);
 			break;
 
 		case 's':
 		case 'S':
+			if (manual){
+				getParams(&commandPacket);
+			}
+			commandPacket.command = COMMAND_REVERSE;
+			sendPacket(&commandPacket);
+			break;
+
+		case 'a':
+		case 'A':
+			if (manual){
+				getParams(&commandPacket);
+			}
+			commandPacket.command = COMMAND_TURN_LEFT;
+			sendPacket(&commandPacket);
+			break;
+
+		case 'd':
+		case 'D':
+			if (manual){
+				getParams(&commandPacket);
+			}
+			commandPacket.command = COMMAND_TURN_RIGHT;
+			sendPacket(&commandPacket);
+			break;
+
+		case ' ':
 			commandPacket.command = COMMAND_STOP;
 			sendPacket(&commandPacket);
 			break;
@@ -226,6 +269,28 @@ void sendCommand(char command)
 			commandPacket.command = COMMAND_GET_STATS;
 			sendPacket(&commandPacket);
 			break;
+		
+		case 'O':
+		case 'o':
+			getservoparams(&commandPacket); // get RAW servo angle
+			printf("servo angle set to %d\n", commandPacket.params[0]); // print set servo angle
+			commandPacket.command = COMMAND_SERVO;
+			sendPacket(&commandPacket);
+			break;
+		
+		case 'm':
+		case 'M': // toggles between manual and auto
+			manual = !manual;
+			if (manual){
+				printf("set to manual\n");
+			}
+			else{
+				printf("set to automatic\n");
+				getParams(&commandPacket); // param[0] = straight line speed, fwd n rev & param[1] = traverse speed, cw and ccw
+			}
+			commandPacket.command = COMMAND_MANUAL;
+			sendPacket(&commandPacket);
+			break;
 
 		case 'q':
 		case 'Q':
@@ -233,7 +298,7 @@ void sendCommand(char command)
 			break;
 
 		default:
-			printf("Bad command\n");
+			printf("Bad command. WASD for movement SPACE=stop, m=toggle trans, c=clear stats, g=get stats, q=exit, o=servo\n");
 
 	}
 }
@@ -262,12 +327,18 @@ int main()
 	while(!exitFlag)
 	{
 		char ch;
-		printf("Command (f=forward, b=reverse, l=turn left, r=turn right, s=stop, c=clear stats, g=get stats q=exit)\n");
-		scanf("%c", &ch);
-
-		// Purge extraneous characters from input stream
-		flushInput();
-
+		if (manual){
+			printf("WASD for movement SPACE=stop, m=toggle trans, c=clear stats, g=get stats, q=exit, o=servo\n");
+			scanf("%c", &ch);
+			flushInput();		// Purge extraneous characters from input stream
+		}
+		else{
+			ch = autotrans();
+			if (ch == prevch){
+				continue;
+			}
+			prevch = ch;
+		}
 		sendCommand(ch);
 	}
 

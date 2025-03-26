@@ -40,7 +40,9 @@ typedef enum
   COMMAND_TURN_RIGHT = 3,
   COMMAND_STOP = 4,
   COMMAND_GET_STATS = 5,
-  COMMAND_CLEAR_STATS = 6
+  COMMAND_CLEAR_STATS = 6,
+  COMMAND_SERVO = 7,
+  COMMAND_MANUAL = 8
 } TCommandType;
 
 typedef enum

@@ -1,15 +1,25 @@
 #include "serialize.h"
 #include <avr/interrupt.h>
 #include <math.h>
-
+#include <Servo.h>
 #include "packet.h"
 #include "constants.h"
 
+Servo servo1; 
+Servo servo2;
 volatile TDirection dir;
+bool manual = true; // if false uses non blocking keyboard inp, else as initially intended
+
+#define INIT_ANGLE 30 // initial angle of servo
+#define SERVO1_PIN 24  // servo pin mapping
+#define SERVO2_PIN 25
 
 #define ALEX_LENGTH 25
 #define ALEX_BREADTH 10
 #define PI 3.141592654
+
+static int STRAIGHT_LINE_SPEED = 100; // speed in fwd n reverse 0-100
+static int TRAVERSE_SPEED = 50;       // speed when rotating 0-100
 
 float alexDiagonal = 0.0;
 float alexCirc = 0.0;
@@ -86,6 +96,16 @@ TResult readPacket(TPacket *packet)
     else
       return deserialize(buffer, len, packet);
     
+}
+
+void setspeed(int speedfwd, int speedtrav){
+  STRAIGHT_LINE_SPEED = speedfwd; // speed in fwd n reverse 0-100
+  TRAVERSE_SPEED = speedtrav;       // speed when rotating 0-100
+}
+
+void servo(float angle){
+  servo1.write(angle);
+  servo2.write(angle);
 }
 
 void sendStatus() {
@@ -279,16 +299,18 @@ void setupEINT()
 void setupSerial()
 {
   // To replace later with bare-metal.
-  /*
-  unsigned int ubrr = round(16000000 / 16 / (9600 - 1));  // UBRR value (assuming F_CPU is the clock speed, e.g., 16MHz)
-  UBRR0H = (unsigned char)(ubrr >> 8);   // Set high byte of baud rate
-  UBRR0L = (unsigned char)(ubrr);        // Set low byte of baud rate
-
-  // Configure the USART for 8 data bits, no parity, 1 stop bit
-  UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);  // Set character size to 8 bits
-  */
   Serial.begin(9600);
   // Change Serial to Serial2/Serial3/Serial4 in later labs when using the other UARTs
+/*
+  UBRR0H = (UBRR_VALUE >> 8);  // Set upper byte of UBRR
+  UBRR0L = UBRR_VALUE;         // Set lower byte of UBRR
+
+  // Enable receiver and transmitter
+  UCSR0B = (1 << RXEN0) | (1 << TXEN0);
+
+  // Set frame format: 8 data bits, 1 stop bit, no parity
+  UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
+*/
 }
 
 // Start the serial connection. For now we are using
@@ -297,7 +319,6 @@ void setupSerial()
 
 void startSerial()
 {
-  //UCSR0B = 0b10111000;
   // Empty for now. To be replaced with bare-metal code
   // later on.
   
@@ -369,25 +390,33 @@ void initializeState()
 }
 
 void handleCommand(TPacket *command)
-{
+{ 
+  double p1 = 0;  // automatic with non blocking
+  float p2 = STRAIGHT_LINE_SPEED;
+  float p3 = TRAVERSE_SPEED;
+  if (manual){
+    p1 = (double) command -> params[0];
+    p2 = (double) command -> params[1];
+  }
+
   switch(command->command)
   {
     // For movement commands, param[0] = distance, param[1] = speed.
     case COMMAND_FORWARD:
         sendOK();
-        forward((double) command->params[0], (float) command->params[1]);
+        forward(p1, p2);
       break;
     case COMMAND_REVERSE:
         sendOK();
-        backward((double) command->params[0], (float) command->params[1]);
+        backward(p1, p2);
       break;
     case COMMAND_TURN_RIGHT:
         sendOK();
-        right((double) command->params[0], (float) command->params[1]);
+        right(p1, p2);
       break;
     case COMMAND_TURN_LEFT:
         sendOK();
-        left((double) command->params[0], (float) command->params[1]);
+        left(p1, p2);
       break;
     case COMMAND_STOP:
         sendOK();
@@ -400,6 +429,14 @@ void handleCommand(TPacket *command)
         clearOneCounter(command->params[0]);
         sendOK();
       break;
+    case COMMAND_SERVO:
+        sendOK();
+        servo((double) command -> params[0]); // sets servo angle, set when getservoparams() function in alex-pi.cpp
+        break;
+    case COMMAND_MANUAL:
+        sendOK();
+        manual = !manual;
+        setspeed(command->params[0], command->params[1]); // sets straightlinespeed and traverse speed
     default:
       sendBadCommand();
   }
@@ -455,6 +492,10 @@ void setup() {
   enablePullups();
   initializeState();
   sei();
+  servo1.attach(SERVO1_PIN); // Attach servo to pin 9
+  servo2.attach(SERVO2_PIN);
+  servo1.write(INIT_ANGLE); // initial servo position
+  servo2.write(INIT_ANGLE);
 }
 
 void handlePacket(TPacket *packet)
