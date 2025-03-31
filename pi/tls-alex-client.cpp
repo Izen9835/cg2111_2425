@@ -1,3 +1,19 @@
+#include <stdio.h>
+#include <termios.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
+#include <stdint.h>
+#include "packet.h"
+#include "serial.h"
+#include "serialize.h"
+
+
+// Serial Comms
+#define PORT_NAME			"/dev/ttyACM0"
+#define BAUD_RATE			B9600
+
+
 
 // Routines to create a TLS client
 #include "make_tls_client.h"
