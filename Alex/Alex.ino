@@ -9,6 +9,7 @@ Servo servo1;
 Servo servo2;
 volatile TDirection dir;
 bool manual = true; // if false uses non blocking keyboard inp, else as initially intended
+bool open = false;
 
 #define INIT_ANGLE 30 // initial angle of servo
 #define SERVO1_PIN 24  // servo pin mapping
@@ -103,9 +104,15 @@ void setspeed(int speedfwd, int speedtrav){
   TRAVERSE_SPEED = speedtrav;       // speed when rotating 0-100
 }
 
-void servo(float angle){
-  servo1.write(angle);
-  servo2.write(angle);
+void servo(){
+  if (open){
+    servo1.write(102);
+    servo2.write(180);
+  }
+  else{
+    servo1.write(180);
+    servo2.write(102);
+  }
 }
 
 void sendStatus() {
@@ -141,7 +148,7 @@ void sendMessage(const char *message)
   sendResponse(&messagePacket);
 }
 
-void dbprintf(/*const*/ char *format, ...) {
+void dbprintf(const char *format, ...) {
   va_list args;
   char buffer[128];
   va_start(args, format);
@@ -430,8 +437,8 @@ void handleCommand(TPacket *command)
         sendOK();
       break;
     case COMMAND_SERVO:
-        sendOK();
-        servo((double) command -> params[0]); // sets servo angle, set when getservoparams() function in alex-pi.cpp
+        open = !open;
+        servo();
         break;
     case COMMAND_MANUAL:
         sendOK();

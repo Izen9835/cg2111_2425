@@ -272,8 +272,8 @@ void sendCommand(char command)
 		
 		case 'O':
 		case 'o':
-			getservoparams(&commandPacket); // get RAW servo angle
-			printf("servo angle set to %d\n", commandPacket.params[0]); // print set servo angle
+			//getservoparams(&commandPacket); // get RAW servo angle
+			//printf("servo angle set to %d\n", commandPacket.params[0]); // print set servo angle
 			commandPacket.command = COMMAND_SERVO;
 			sendPacket(&commandPacket);
 			break;
