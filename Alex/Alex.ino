@@ -1,4 +1,4 @@
-#include "serialize.h"
+  #include "serialize.h"
 #include <avr/interrupt.h>
 #include <math.h>
 #include <Servo.h>
@@ -15,7 +15,7 @@ bool open = false;
 #define SERVO1_PIN 24  // servo pin mapping
 #define SERVO2_PIN 25
 
-#define ALEX_LENGTH 25
+#define ALEX_LENGTH 25i
 #define ALEX_BREADTH 10
 #define PI 3.141592654
 
@@ -501,8 +501,8 @@ void setup() {
   sei();
   servo1.attach(SERVO1_PIN); // Attach servo to pin 9
   servo2.attach(SERVO2_PIN);
-  servo1.write(INIT_ANGLE); // initial servo position
-  servo2.write(INIT_ANGLE);
+  servo1.write(102); // initial servo position
+  servo2.write(180);
 }
 
 void handlePacket(TPacket *packet)
