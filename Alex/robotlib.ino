@@ -2,9 +2,9 @@
 // Direction values
 // Motor control
 #define FRONT_LEFT   4 // M4 on the driver shield
-#define FRONT_RIGHT  1 // M1 on the driver shield
+#define FRONT_RIGHT  2 // M1 on the driver shield
 #define BACK_LEFT    3 // M3 on the driver shield
-#define BACK_RIGHT   2 // M2 on the driver shield
+#define BACK_RIGHT   1 // M2 on the driver shield
 
 AF_DCMotor motorFL(FRONT_LEFT);
 AF_DCMotor motorFR(FRONT_RIGHT);
@@ -14,9 +14,9 @@ AF_DCMotor motorBR(BACK_RIGHT);
 void move(float speed, int direction)
 {
   int speed_scaled = (speed/100.0) * 255;
-  motorFL.setSpeed(speed_scaled);
-  motorFR.setSpeed(speed_scaled);
-  motorBL.setSpeed(speed_scaled);
+  //motorFL.setSpeed(speed_scaled);
+  motorFR.setSpeed(speed_scaled + 40);
+  //motorBL.setSpeed(speed_scaled);
   motorBR.setSpeed(speed_scaled);
 
   switch(direction)
@@ -34,16 +34,18 @@ void move(float speed, int direction)
         motorBR.run(BACKWARD); 
       break;
       case CW:
-        motorFL.run(BACKWARD);
+        motorFR.setSpeed(speed_scaled);
+        motorFL.run(FORWARD);
         motorFR.run(FORWARD);
         motorBL.run(FORWARD);
-        motorBR.run(BACKWARD); 
+        motorBR.run(FORWARD); 
       break;
       case CCW:
-        motorFL.run(FORWARD);
+        motorFR.setSpeed(speed_scaled);
+        motorFL.run(BACKWARD);
         motorFR.run(BACKWARD);
         motorBL.run(BACKWARD);
-        motorBR.run(FORWARD); 
+        motorBR.run(BACKWARD); 
       break;
       case STOP:
       default:

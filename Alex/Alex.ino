@@ -5,19 +5,38 @@
 #include "packet.h"
 #include "constants.h"
 
-Servo servo1; 
-Servo servo2;
+Servo servo1; // bottom left
+Servo servo2; // bottom right
+Servo servo3; // medpak
 volatile TDirection dir;
-bool manual = true; // if false uses non blocking keyboard inp, else as initially intended
-bool open = false;
+bool manual = true;   // if false uses non blocking keyboard inp, else as initially intended
+bool pulseon = false; // if false no ultrasonic on
+bool coloron = false; // if false no color sensor on
+bool open = true; // servo open
+int initangle = 0; // medpak start angle
+int medpakang = 30;
 
-#define INIT_ANGLE 30 // initial angle of servo
-#define SERVO1_PIN 24  // servo pin mapping
-#define SERVO2_PIN 25
+#define SERVO1_PIN 24   // servo pin mapping
+#define SERVO2_PIN 25   
+#define SERVO3_PIN 26   // medpak servo pin
+#define TRIG_PIN 27     // ultrasonic sensor  
+#define ECHO_PIN 28
 
 #define ALEX_LENGTH 25
 #define ALEX_BREADTH 10
 #define PI 3.141592654
+
+/*
+const int s0 = 35;
+const int s1 = 36;
+const int s2 = 37;
+const int s3 = 38;
+const int signal = 39;
+unsigned long clear;
+unsigned long red;  
+unsigned long green;
+unsigned long blue;
+*/
 
 static int STRAIGHT_LINE_SPEED = 100; // speed in fwd n reverse 0-100
 static int TRAVERSE_SPEED = 50;       // speed when rotating 0-100
@@ -99,22 +118,63 @@ TResult readPacket(TPacket *packet)
     
 }
 
-void setspeed(int speedfwd, int speedtrav){
-  STRAIGHT_LINE_SPEED = speedfwd; // speed in fwd n reverse 0-100
-  TRAVERSE_SPEED = speedtrav;       // speed when rotating 0-100
+float pulse(){
+  float duration;
+  float distance;
+
+  // Send ultrasonic pulse
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  // Read echo pulse
+  duration = pulseIn(ECHO_PIN, HIGH);
+
+  if (duration == 0) {
+    return -1.0;  // timeout
+  }
+
+  // Convert time to distance (in cm)
+  distance = (duration * 0.0343) / 2;
+  return distance; 
 }
 
 void servo(){
-  if (open){
+  if (open){ // open
     servo1.write(102);
     servo2.write(180);
   }
-  else{
+  else{ // close
     servo1.write(180);
     servo2.write(102);
   }
 }
 
+/*void sensecolor(){
+  // red filter
+  digitalWrite(s2, LOW);
+  digitalWrite(s3, LOW);
+  red = pulseIn(signal, HIGH);
+  delay(100);
+  // green filter
+  digitalWrite(s2, HIGH);
+  digitalWrite(s3, HIGH);
+  green = pulseIn(signal, HIGH);
+  delay(100);
+  // blue filter
+  digitalWrite(s2, LOW);
+  digitalWrite(s3, HIGH);
+  blue = pulseIn(signal, HIGH);
+  delay(100);
+}*/
+
+void setspeed(int speedfwd, int speedtrav){
+  STRAIGHT_LINE_SPEED = speedfwd; // speed in fwd n reverse 0-100
+  TRAVERSE_SPEED = speedtrav;       // speed when rotating 0-100
+}
+/*
 void sendStatus() {
 
   TPacket statusPacket;
@@ -154,13 +214,13 @@ void dbprintf(const char *format, ...) {
   va_start(args, format);
   vsprintf(buffer, format, args);
   sendMessage(buffer);
-} 
-
+}
+*/
 void sendBadPacket()
 {
   // Tell the Pi that it sent us a packet with a bad
   // magic number.
-  
+  stop();
   TPacket badPacket;
   badPacket.packetType = PACKET_TYPE_ERROR;
   badPacket.command = RESP_BAD_PACKET;
@@ -172,7 +232,7 @@ void sendBadChecksum()
 {
   // Tell the Pi that it sent us a packet with a bad
   // checksum.
-  
+  stop();
   TPacket badChecksum;
   badChecksum.packetType = PACKET_TYPE_ERROR;
   badChecksum.command = RESP_BAD_CHECKSUM;
@@ -183,7 +243,7 @@ void sendBadCommand()
 {
   // Tell the Pi that we don't understand its
   // command sent to us.
-  
+  stop();
   TPacket badCommand;
   badCommand.packetType=PACKET_TYPE_ERROR;
   badCommand.command=RESP_BAD_COMMAND;
@@ -192,6 +252,7 @@ void sendBadCommand()
 
 void sendBadResponse()
 {
+  stop();
   TPacket badResponse;
   badResponse.packetType = PACKET_TYPE_ERROR;
   badResponse.command = RESP_BAD_RESPONSE;
@@ -398,12 +459,13 @@ void initializeState()
 
 void handleCommand(TPacket *command)
 { 
-  double p1 = 0;  // automatic with non blocking
+  double p1 = 0;
   float p2 = STRAIGHT_LINE_SPEED;
   float p3 = TRAVERSE_SPEED;
   if (manual){
     p1 = (double) command -> params[0];
     p2 = (double) command -> params[1];
+    p3 = (double) command -> params[1];
   }
 
   switch(command->command)
@@ -419,31 +481,40 @@ void handleCommand(TPacket *command)
       break;
     case COMMAND_TURN_RIGHT:
         sendOK();
-        right(p1, p2);
+        right(p1, p3);
       break;
     case COMMAND_TURN_LEFT:
         sendOK();
-        left(p1, p2);
+        left(p1, p3);
       break;
     case COMMAND_STOP:
         sendOK();
         stop();
       break;
     case COMMAND_GET_STATS:
-        sendStatus();
+        //sendStatus();
       break;
     case COMMAND_CLEAR_STATS:
         clearOneCounter(command->params[0]);
         sendOK();
       break;
     case COMMAND_SERVO:
+        sendOK();
         open = !open;
         servo();
-        break;
+      break;
     case COMMAND_MANUAL:
         sendOK();
         manual = !manual;
         setspeed(command->params[0], command->params[1]); // sets straightlinespeed and traverse speed
+      break;
+    case COMMAND_PULSE:
+        float x = pulse();
+        //dbprintf("distance: %df\n", x);
+      break;
+    case COMMAND_COLOR:
+      servo3.write(medpakang); // open angle
+      break;
     default:
       sendBadCommand();
   }
@@ -499,10 +570,23 @@ void setup() {
   enablePullups();
   initializeState();
   sei();
-  servo1.attach(SERVO1_PIN); // Attach servo to pin 9
-  servo2.attach(SERVO2_PIN);
-  servo1.write(INIT_ANGLE); // initial servo position
-  servo2.write(INIT_ANGLE);
+  pinMode(TRIG_PIN, OUTPUT);  // Trig is an output
+  pinMode(ECHO_PIN, INPUT);
+  /*
+  pinMode(signal, INPUT);
+  pinMode(s0, OUTPUT);
+  pinMode(s1, OUTPUT);
+  pinMode(s2, OUTPUT);
+  pinMode(s3, OUTPUT);
+  */
+  servo1.attach(SERVO2_PIN);
+  servo2.attach(SERVO1_PIN);
+  servo3.attach(SERVO3_PIN);
+  servo1.write(102); // initial servo position
+  servo2.write(180);
+  servo3.write(initangle);
+  //digitalWrite(s0, HIGH); // frequency scaling LL off, LH 2%, HL 20%, HH 100%
+  //digitalWrite(s1, LOW);
 }
 
 void handlePacket(TPacket *packet)
@@ -562,7 +646,6 @@ void loop() {
   // Uncomment the code below for Step 2 of Activity 3 in Week 8 Studio 2
   // put your main code here, to run repeatedly:
   TPacket recvPacket; // This holds commands from the Pi
-
   TResult result = readPacket(&recvPacket);
   
   if(result == PACKET_OK)

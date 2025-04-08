@@ -9,7 +9,7 @@
 #include "serialize.h"
 #include "constants.h"
 
-#define PORT_NAME			"/dev/ttyACM0"
+#define PORT_NAME			"/dev/ttyACM1"
 #define BAUD_RATE			B9600
 
 static char prevch = '0'; 		// to prevent flooding of commands
@@ -113,12 +113,12 @@ void handleErrorResponse(TPacket *packet)
 			printf("Arduino reports a weird error\n");
 	}
 }
-
+/*
 void handleMessage(TPacket *packet)
 {
 	printf("Message from Alex: %s\n", packet->data);
 }
-
+*/
 void handlePacket(TPacket *packet)
 {
 	switch(packet->packetType)
@@ -134,10 +134,11 @@ void handlePacket(TPacket *packet)
 		case PACKET_TYPE_ERROR:
 				handleErrorResponse(packet);
 			break;
-
+/*
 		case PACKET_TYPE_MESSAGE:
 				handleMessage(packet);
 			break;
+*/
 	}
 }
 
