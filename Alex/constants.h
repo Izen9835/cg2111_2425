@@ -44,7 +44,7 @@ typedef enum
   COMMAND_SERVO = 7,
   COMMAND_MANUAL = 8,
   COMMAND_PULSE = 9,
-  COMMAND_COLOR = 10
+  COMMAND_MEDPAK = 10
 } TCommandType;
 
 typedef enum
@@ -65,4 +65,3 @@ typedef enum Tdir
 } Tdir;
 
 #endif
-

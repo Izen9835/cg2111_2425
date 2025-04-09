@@ -9,7 +9,7 @@
 #include "serialize.h"
 #include "constants.h"
 
-#define PORT_NAME			"/dev/ttyACM1"
+#define PORT_NAME			"/dev/ttyACM0"
 #define BAUD_RATE			B9600
 
 static char prevch = '0'; 		// to prevent flooding of commands
@@ -292,6 +292,12 @@ void sendCommand(char command)
 			commandPacket.command = COMMAND_MANUAL;
 			sendPacket(&commandPacket);
 			break;
+		
+		case 'p': // MEDPAK
+		case 'P':
+			commandPacket.command = COMMAND_MEDPAK;
+			sendPacket(&commandPacket);
+			break;
 
 		case 'q':
 		case 'Q':
@@ -299,7 +305,7 @@ void sendCommand(char command)
 			break;
 
 		default:
-			printf("Bad command. WASD for movement SPACE=stop, m=toggle trans, c=clear stats, g=get stats, q=exit, o=servo\n");
+			printf("Bad command. WASD for movement SPACE=stop, m=toggle trans, q=exit, o=servo, p=medpak\n");
 
 	}
 }
@@ -329,7 +335,7 @@ int main()
 	{
 		char ch;
 		if (manual){
-			printf("WASD for movement SPACE=stop, m=toggle trans, c=clear stats, g=get stats, q=exit, o=servo\n");
+			printf("WASD for movement SPACE=stop, m=toggle trans, q=exit, o=servo, p=medpak\n");
 			scanf("%c", &ch);
 			flushInput();		// Purge extraneous characters from input stream
 		}

@@ -42,7 +42,9 @@ typedef enum
   COMMAND_GET_STATS = 5,
   COMMAND_CLEAR_STATS = 6,
   COMMAND_SERVO = 7,
-  COMMAND_MANUAL = 8
+  COMMAND_MANUAL = 8,
+  COMMAND_PULSE = 9,
+  COMMAND_MEDPAK = 10
 } TCommandType;
 
 typedef enum

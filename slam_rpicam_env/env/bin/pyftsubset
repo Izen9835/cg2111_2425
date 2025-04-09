@@ -1,4 +1,4 @@
-#!/home/alex/Studios/ROS_RPiCAM_SETUP/env/bin/python
+#!/home/alex/cg2111_2425/slam_rpicam_env/env/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

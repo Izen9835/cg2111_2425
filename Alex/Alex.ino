@@ -16,8 +16,8 @@ bool open = true; // servo open
 int initangle = 0; // medpak start angle
 int medpakang = 30;
 
-#define SERVO1_PIN 24   // servo pin mapping
-#define SERVO2_PIN 25   
+#define SERVO1_PIN 25   // servo pin mapping
+#define SERVO2_PIN 24   
 #define SERVO3_PIN 26   // medpak servo pin
 #define TRIG_PIN 27     // ultrasonic sensor  
 #define ECHO_PIN 28
@@ -146,10 +146,19 @@ void servo(){
     servo1.write(102);
     servo2.write(180);
   }
-  else{ // close
+  else{
     servo1.write(180);
     servo2.write(102);
   }
+  /*else{ // close
+    int servo1x = 102;
+    int servo2x = 180;
+    for (int i = 1; i <= 78; i += 1){
+      servo1.write(servo1x + i);
+      servo2.write(servo2x - i);
+      delay(50);
+    }
+  }*/
 }
 
 /*void sensecolor(){
@@ -512,8 +521,8 @@ void handleCommand(TPacket *command)
         float x = pulse();
         //dbprintf("distance: %df\n", x);
       break;
-    case COMMAND_COLOR:
-      servo3.write(medpakang); // open angle
+    case COMMAND_MEDPAK:
+      servo3.write(90); // open angle
       break;
     default:
       sendBadCommand();
@@ -584,7 +593,7 @@ void setup() {
   servo3.attach(SERVO3_PIN);
   servo1.write(102); // initial servo position
   servo2.write(180);
-  servo3.write(initangle);
+  servo3.write(0);
   //digitalWrite(s0, HIGH); // frequency scaling LL off, LH 2%, HL 20%, HH 100%
   //digitalWrite(s1, LOW);
 }

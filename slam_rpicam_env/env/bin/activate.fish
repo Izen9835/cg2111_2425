@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV /home/alex/Studios/ROS_RPiCAM_SETUP/env
+set -gx VIRTUAL_ENV /home/alex/cg2111_2425/slam_rpicam_env/env
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/"bin $PATH
