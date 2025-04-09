@@ -29,7 +29,7 @@ tmux send-keys -t $SESSION 'source env/bin/activate; clear' C-m
 tmux send-keys -t $SESSION 'python labs/SlamLab/alex_main.py' C-m
 
 tmux split-window -v -t $SESSION
-tmux send-keys -t $SESSION 'export PS1=""; clear; echo "Camera Server"; echo "http://$(hostname -I | awk '\''{print $1}'\''):8080"; echo "SLAM Bokeh Server"; echo "http://$(hostname -I | awk '\''{print $1}'\''):8181"' C-m
+tmux send-keys -t $SESSION 'export PS1=""; clear; echo "Camera Server"; echo "http://$(hostname -I | awk '\''{print $1}'\''):8000"; echo "SLAM Bokeh Server"; echo "http://$(hostname -I | awk '\''{print $1}'\''):8181"' C-m
 
 
 
