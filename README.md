@@ -3,6 +3,7 @@ clone this on a Linux system (others might not work)
 
 ## Start Script
 Start script runs a tmux panel that runs teleop, slam node, camera stream server
+
 build start script 
 ```bash
 chmod +x start_script.sh
