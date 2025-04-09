@@ -1,6 +1,19 @@
 # CG2111a 2425 Sem 2 Grp 1A Repo
 clone this on a Linux system (others might not work)
 
+## Start Script
+Start script runs a tmux panel that runs teleop, slam node, camera stream server
+build start script 
+```bash
+chmod +x start_script.sh
+```
+run the start script
+```bash
+./start_script.sh
+```
+
+Alternatively, run the below commands:
+
 ## Commands
 1. Open Alex/alex.ino in Arduino IDE, flash to Arduino mega328p
 
