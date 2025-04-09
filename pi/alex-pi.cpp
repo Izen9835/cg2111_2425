@@ -9,7 +9,7 @@
 #include "serialize.h"
 #include "constants.h"
 
-#define PORT_NAME			"/dev/ttyACM0"
+#define PORT_NAME			"/dev/ttyACM1"
 #define BAUD_RATE			B9600
 
 static char prevch = '0'; 		// to prevent flooding of commands
@@ -305,7 +305,7 @@ void sendCommand(char command)
 			break;
 
 		default:
-			printf("Bad command. WASD for movement SPACE=stop, m=toggle trans, q=exit, o=servo, p=medpak\n");
+			printf("Bad command. WASD for movement SPACE=stop, m=toggle trans, q=exit, o=servo, c=medpak\n");
 
 	}
 }
