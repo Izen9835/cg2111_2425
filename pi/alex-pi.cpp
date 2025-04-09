@@ -335,7 +335,7 @@ int main()
 	{
 		char ch;
 		if (manual){
-			printf("WASD for movement SPACE=stop, m=toggle trans, q=exit, o=servo, p=medpak\n");
+			printf("WASD for movement SPACE=stop, m=toggle trans, q=exit, o=servo, c=medpak\n");
 			scanf("%c", &ch);
 			flushInput();		// Purge extraneous characters from input stream
 		}

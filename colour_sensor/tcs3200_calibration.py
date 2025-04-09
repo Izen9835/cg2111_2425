@@ -77,13 +77,35 @@ def read_value(a0, a1):
 
     return NUM_CYCLES / duration #in Hz
 
+"""
+def loop():
+    while(True):
+        red = read_value(GPIO.LOW, GPIO.LOW)
+        time.sleep(0.1)
+        green = read_value(GPIO.HIGH, GPIO.HIGH)
+        time.sleep(0.1)
+        blue = read_value(GPIO.LOW, GPIO.HIGH)
+        time.sleep(0.1)
+
+        print("r= ", red)
+        print("g= ", green)
+        print("b= ", blue)
+
+        if (green > red):
+            print("DETECTED COLOUR: GREEN")
+        elif (red > green):
+            print("DETECTED COLOUR: RED")
+        else:
+            print("UNKNOWN COLOUR")
+"""
 
 def loop():
-    no_of_readings = 6
+    no_of_readings = 10
     while True:
         red = 0
         green = 0
         blue = 0
+        print("measuring avg readings...")
         for bruh in range(no_of_readings):
             red += read_value(GPIO.LOW, GPIO.LOW)
             time.sleep(0.1)
@@ -110,6 +132,7 @@ def loop():
         else:
             print("green detected")
 
+        input("press <ENTER> to cont")
 
 
 
