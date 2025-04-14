@@ -65,6 +65,25 @@ IMAGE_MAP_DOWNSCALE_FACTOR = 1 # Downscale the image by this factor for display 
 SLAM_MAP_GUI_UPDATE_INTERVAL = 0.25 # seconds, minimum time between updates to the SLAM map image
 
 
+#####################################################################
+
+from PIL import Image
+import numpy as np
+
+ALEX_IMG = Image.open("ALEX_IMG.png").convert("RGBA")
+ALEX_IMG_ARR = np.array(ALEX_IMG)
+
+ALEX_rgba = np.dstack([
+    ALEX_IMG_ARR[:, :, 0],
+    ALEX_IMG_ARR[:, :, 1],
+    ALEX_IMG_ARR[:, :, 2],
+    ALEX_IMG_ARR[:, :, 3]
+]).view(dtype=np.uint32).reshape(ALEX_IMG_ARR.shape[:2])
+
+# Flip the image vertically (Bokeh expects origin at bottom-left)
+ALEX_rgba = np.flipud(ALEX_rgba)
+
+#####################################################################
 
 def lidarDisplayProcess(setupBarrier:Barrier=None, readyBarrier:Barrier=None):
     """
@@ -211,13 +230,12 @@ def makeRobotTriangle(
     angle_bottom_left = np.deg2rad(angle_bottom_left)
     angle_bottom_right = np.deg2rad(angle_bottom_right)
 
-    top2 = projectCoordinates(robotOriginXmm, robotOriginYmm, front, ROBOT_HALF_HEIGHT_MM+50)
     top = projectCoordinates(robotOriginXmm, robotOriginYmm, front, ROBOT_HALF_HEIGHT_MM)
     bottom_left = projectCoordinates(robotOriginXmm, robotOriginYmm, angle_bottom_left, ROBOT_HALF_DIAGONAL)
     bottom_right = projectCoordinates(robotOriginXmm, robotOriginYmm, angle_bottom_right, ROBOT_HALF_DIAGONAL)
 
-    robot_Xs = [top2[0], top[0], bottom_left[0], bottom_right[0]]
-    robot_Ys = [top2[0], top[1], bottom_left[1], bottom_right[1]]
+    robot_Xs = [ top[0], bottom_left[0], bottom_right[0]]
+    robot_Ys = [ top[1], bottom_left[1], bottom_right[1]]
     
     return robot_Xs, robot_Ys
 
@@ -290,11 +308,23 @@ def createLidarPlot():
     
     # Draw a red triangle at the origin to represent the robot
     # use a patch to draw the triangle
-    robot_Xs, robot_Ys = makeRobotTriangle(0, 0, 0)
-    robot_color = "blue"
-    robot_line_color = "black"
-    robot_alpha = 1
-    p.patch(x=robot_Xs, y=robot_Ys, fill_color=robot_color, line_color=robot_line_color, alpha=robot_alpha)
+    # robot_Xs, robot_Ys = makeRobotTriangle(0, 0, 0)
+    # robot_color = "blue"
+    # robot_line_color = "black"
+    # robot_alpha = 0.25
+    # p.patch(x=robot_Xs, y=robot_Ys, fill_color=robot_color, line_color=robot_line_color, alpha=robot_alpha)
+
+
+    # p.image_rgba(
+    #     image=[ALEX_rgba],
+    #     x=[-100], y=[-100],  # Adjust to shift position
+    #     dw=[200], dh=[200]       # Width and height of the image in plot units
+    # )
+    p.image_rgba(
+        image=[ALEX_rgba],
+        x=[-250/9*8], y=[-250/9*8-20],  # Adjust to shift position
+        dw=[500/9*8], dh=[500/9*8]       # Width and height of the image in plot units
+    )
 
     # draw draw the distance lines
     firstRing_radius = 500

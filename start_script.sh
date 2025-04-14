@@ -7,7 +7,7 @@ tmux new-session -d -s $SESSION
 
 # Split the bottom pane vertically (Pane 1 will be created below)
 tmux send-keys -t $SESSION 'cd ~/cg2111_2425/pi' C-m
-tmux send-keys -t $SESSION './alex-main' C-m
+tmux send-keys -t $SESSION './alex-pi' C-m
 
 # Pane 0 (top-left): Ru
 tmux split-window -h -t $SESSION 
