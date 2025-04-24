@@ -9,11 +9,12 @@
 #include "serialize.h"
 #include "constants.h"
 
-#define PORT_NAME			"/dev/ttyACM1"
+#define PORT_NAME			"/dev/ttyACM0"
 #define BAUD_RATE			B9600
 
 static char prevch = '0'; 		// to prevent flooding of commands
 bool manual = true;
+bool opened = false;
 int exitFlag=0;
 sem_t _xmitSema;
 
@@ -76,9 +77,13 @@ void handleResponse(TPacket *packet)
 	switch(packet->command)
 	{
 		case RESP_OK:
-			printf("Command OK\n");
-		break;
-
+			if (!opened){
+				printf("CLOSE\n");
+			}
+			else{
+				printf("OPEN\n");
+			}
+			break;
 		case RESP_STATUS:
 			handleStatus(packet);
 		break;
@@ -277,6 +282,7 @@ void sendCommand(char command)
 			//printf("servo angle set to %d\n", commandPacket.params[0]); // print set servo angle
 			commandPacket.command = COMMAND_SERVO;
 			sendPacket(&commandPacket);
+			opened =!opened;
 			break;
 		
 		case 'm':

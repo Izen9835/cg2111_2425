@@ -322,8 +322,8 @@ def createLidarPlot():
     # )
     p.image_rgba(
         image=[ALEX_rgba],
-        x=[-250/9*8], y=[-250/9*8-20],  # Adjust to shift position
-        dw=[500/9*8], dh=[500/9*8]       # Width and height of the image in plot units
+        x=[-130], y=[-210],  # Adjust to shift position
+        dw=[260], dh=[382]       # Width and height of the image in plot units
     )
 
     # draw draw the distance lines
