@@ -1,6 +1,10 @@
 # CG2111a 2425 Sem 2 Grp 1A Repo
 clone this on a Linux system (others might not work)
 
+![cg2111arobotgroup](https://github.com/user-attachments/assets/7084e886-892f-45c6-b91b-ad6843034f60)
+
+
+
 ## Start Script
 Start script runs a tmux panel that runs teleop, slam node, camera stream server
 
